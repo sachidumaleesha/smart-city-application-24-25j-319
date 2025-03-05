@@ -1,0 +1,133 @@
+"use client";
+
+import * as React from "react";
+import {
+  CarTaxiFront,
+  CircleParking,
+  GalleryVerticalEnd,
+  LayoutDashboard,
+  LifeBuoy,
+  PersonStanding,
+  Send,
+  Settings2,
+  Trash,
+  User,
+} from "lucide-react";
+
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "@/components/ui/sidebar";
+import { NavSecondary } from "./nav-secondary";
+import { UserData } from "@/app/(dashboard)/layout";
+
+const baseURL = "dashboard";
+
+// This is sample data.
+export const data = {
+  teams: [
+    {
+      name: "Smart City 🏙️.",
+      logo: GalleryVerticalEnd,
+      plan: "Enterprise",
+    },
+  ],
+  adminNavMain: [
+    {
+      title: "Dashboard",
+      url: "/admin",
+      breadcrumb: "dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Users",
+      url: "/admin/users",
+      breadcrumb: "users",
+      icon: User,
+    },
+    {
+      title: "Settings",
+      url: "/admin/settings",
+      breadcrumb: "settings",
+      icon: Settings2,
+    },
+  ],
+  userNavMain: [
+    {
+      title: "Dashboard",
+      url: `/${baseURL}`,
+      breadcrumb: "dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Surveillance Enhancement",
+      url: `/${baseURL}/surveillance-enhancement`,
+      breadcrumb: "surveillance-enhancement",
+      icon: PersonStanding,
+    },
+    {
+      title: "Waste Management",
+      url: `/${baseURL}/waste-management`,
+      breadcrumb: "waste-management",
+      icon: Trash,
+    },
+    {
+      title: "Accident Detection",
+      url: `/${baseURL}/accident-detection`,
+      breadcrumb: "accident-detection",
+      icon: CarTaxiFront,
+    },
+    {
+      title: "Parking Management",
+      url: `/${baseURL}/parking-management`,
+      breadcrumb: "parking-management",
+      icon: CircleParking,
+    },
+    {
+      title: "Settings",
+      url: `/${baseURL}/settings`,
+      icon: Settings2,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Support",
+      url: "#",
+      icon: LifeBuoy,
+    },
+    {
+      title: "Feedback",
+      url: "#",
+      icon: Send,
+    },
+  ],
+};
+
+export function AppSidebar({
+  user,
+  role,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { user: UserData; role: string }) {
+  const navItems = role === "ADMIN" ? data.adminNavMain : data.userNavMain;
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <TeamSwitcher teams={data.teams} />
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={navItems} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
