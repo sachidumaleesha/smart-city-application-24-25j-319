@@ -44,6 +44,20 @@ export const data = {
       url: "/admin",
       breadcrumb: "dashboard",
       icon: LayoutDashboard,
+      items: [
+        {
+          title: "History",
+          url: "#",
+        },
+        {
+          title: "Starred",
+          url: "#",
+        },
+        {
+          title: "Settings",
+          url: "#",
+        },
+      ],
     },
     {
       title: "Users",
@@ -76,6 +90,12 @@ export const data = {
       url: `/${baseURL}/waste-management`,
       breadcrumb: "waste-management",
       icon: Trash,
+      items: [
+        {
+          title: "Get Prediction",
+          url: `/${baseURL}/waste-management/get-prediction`,
+        },
+      ],
     },
     {
       title: "Accident Detection",
