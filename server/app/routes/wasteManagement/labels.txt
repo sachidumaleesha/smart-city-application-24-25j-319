@@ -1,0 +1,4 @@
+0 plastic
+1 glass
+2 organic
+3 paper
