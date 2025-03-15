@@ -92,6 +92,10 @@ export const data = {
       icon: Trash,
       items: [
         {
+          title: "Analytics",
+          url: `/${baseURL}/waste-management/analytics`,
+        },
+        {
           title: "Get Prediction",
           url: `/${baseURL}/waste-management/get-prediction`,
         },
