@@ -18,7 +18,7 @@ export default function BinLidControl() {
     { id: "paper", name: "Paper", color: "yellow" },
     { id: "plastic", name: "Plastic", color: "red" },
     { id: "organic", name: "Organic", color: "green" },
-    { id: "glass", name: "Glass", color: "purple" },
+    { id: "glass", name: "Glass", color: "blue" },
   ]
 
   const [openBins, setOpenBins] = useState<Record<string, boolean>>({})
