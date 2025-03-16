@@ -41,7 +41,7 @@ def stop_feed():
 @cctv_control_bp.route("/snapshot", methods=["GET"])
 def snapshot():
     # Only use the streaming endpoint to snapshot or implement snapshot using a new camera access.
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         return jsonify({"message": "Error: Cannot open the webcam."})
     ret, frame = cap.read()

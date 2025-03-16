@@ -10,6 +10,8 @@ def create_app():
     # Import and register blueprints (routes)
     from app.routes.accidentDetection import accident_bp
     from app.routes.wasteManagement.wasteTypeDetection import wasteManagement_bp
+    from .routes.surveillanceEnhancementStream import cctv_bp
+    from .routes.surveillance_enhancement import cctv_control_bp
 
     # Register accidentDetection routes:
     from .routes.accidentDetection import accident_bp
@@ -17,11 +19,9 @@ def create_app():
     app.register_blueprint(wasteManagement_bp, url_prefix="/api/wasteManagement")
 
     # Register CCTV streaming routes (if any)
-    from .routes.surveillanceEnhancementStream import cctv_bp
     app.register_blueprint(cctv_bp)
 
     # Register CCTV control endpoints with prefix /cctv
-    from .routes.surveillance_enhancement import cctv_control_bp
     app.register_blueprint(cctv_control_bp, url_prefix="/cctv")
 
     return app

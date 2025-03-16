@@ -6,6 +6,7 @@ const SurveillanceEnhancementPage = () => {
   const [feedStarted, setFeedStarted] = useState(false);
   const [suspiciousCount, setSuspiciousCount] = useState(0);
   const [alertMessage, setAlertMessage] = useState("");
+  const [suspiciousImages, setSuspiciousImages] = useState<string[]>([]);
 
   const handleStartFeed = async () => {
     try {
@@ -31,10 +32,15 @@ const SurveillanceEnhancementPage = () => {
 
   const sendWhatsappMessage = async () => {
     try {
-      // Call snapshot API
+      // Call snapshot API and get snapshot data
       const snapshotRes = await fetch("http://localhost:5000/cctv/snapshot", { method: "GET" });
       const snapshotData = await snapshotRes.json();
       console.log("Snapshot:", snapshotData);
+      
+      // If snapshot API returns an image_url, add it to the suspiciousImages array.
+      if (snapshotData.image_url) {
+        setSuspiciousImages(prev => [...prev, snapshotData.image_url]);
+      }
 
       // Inline WhatsApp notification logic (custom text message)
       const PHONE_NUMBER_ID = "628213070365635";
@@ -66,30 +72,31 @@ const SurveillanceEnhancementPage = () => {
       console.error("Error taking snapshot or sending WhatsApp notification", error);
     }
   };
-// Poll suspicious count every 5 seconds and trigger WhatsApp if suspiciousCount > 40
-useEffect(() => {
-  const interval = setInterval(async () => {
-    try {
-      const res = await fetch("http://localhost:5000/cctv/suspicious");
-      const { suspicious_count } = await res.json();
-      setSuspiciousCount(suspicious_count);
-      if (suspicious_count > 40) {
-        setAlertMessage("Warning: High number of suspicious activity detected!");
-        // Send WhatsApp notification if threshold is exceeded
-        await sendWhatsappMessage();
-        // Reset server suspicious_count by calling the reset endpoint
-        await fetch("http://localhost:5000/cctv/reset", { method: "POST" });
-        // Reset local count as well
-        setSuspiciousCount(0);
-      } else {
-        setAlertMessage("");
+
+  // Poll suspicious count every 5 seconds and trigger WhatsApp if suspiciousCount > 40
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:5000/cctv/suspicious");
+        const { suspicious_count } = await res.json();
+        setSuspiciousCount(suspicious_count);
+        if (suspicious_count > 40) {
+          setAlertMessage("Warning: High number of suspicious activity detected!");
+          // Send WhatsApp notification and capture suspicious snapshot
+          await sendWhatsappMessage();
+          // Reset server suspicious_count by calling the reset endpoint
+          await fetch("http://localhost:5000/cctv/reset", { method: "POST" });
+          // Reset local count as well
+          setSuspiciousCount(0);
+        } else {
+          setAlertMessage("");
+        }
+      } catch (error) {
+        console.error("Error fetching suspicious count", error);
       }
-    } catch (error) {
-      console.error("Error fetching suspicious count", error);
-    }
-  }, 5000);
-  return () => clearInterval(interval);
-}, []);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
@@ -139,6 +146,22 @@ useEffect(() => {
           Suspicious activity detections: {suspiciousCount}
         </p>
       </div>
+      {/* Render suspicious activity snapshots as a list of images */}
+      {suspiciousImages.length > 0 && (
+        <div className="mt-8 w-full max-w-2xl">
+          <h2 className="text-xl font-semibold mb-4">Suspicious Activity Snapshots</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {suspiciousImages.map((imgUrl, index) => (
+              <img
+                key={index}
+                src={imgUrl}
+                alt={`Suspicious snapshot ${index + 1}`}
+                className="w-full object-cover rounded border"
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

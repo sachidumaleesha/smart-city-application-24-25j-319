@@ -3,16 +3,11 @@ import time
 import tensorflow as tf
 import cv2
 import numpy as np
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response, jsonify, send_from_directory
 
 cctv_bp = Blueprint("cctv", __name__)
 
-# Load the trained model (if needed for overlay, etc.)
-# model = tf.keras.models.load_model(
-#     r"C:\Users\nipun\Downloads\surveillance_enhancement_v6.h5", compile=False
-# )
-
-# Load the trained model from a relative path (assumes the model is in 'dbModels' folder)
+# Load the trained model from a relative path
 model_path = os.path.join(os.path.dirname(__file__), "..", "dbModels", "surveillance_enhancement_v6.h5")
 model = tf.keras.models.load_model(model_path, compile=False)
 
@@ -63,19 +58,34 @@ def gen_frames():
 def video_feed():
     return Response(gen_frames(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-# New endpoint to retrieve the suspicious count
 @cctv_bp.route("/cctv/suspicious", methods=["GET"])
 def get_suspicious_count():
     global suspicious_count
     return jsonify({"suspicious_count": suspicious_count})
 
-
-# New endpoint to reset the suspicious count to 0
 @cctv_bp.route("/cctv/reset", methods=["POST"])
 def reset_suspicious_count():
     global suspicious_count
     suspicious_count = 0
     return jsonify({"message": "Suspicious count reset"}), 200
+
+# Snapshot endpoint: capture a frame, save it, and return its URL.
+@cctv_bp.route("/cctv/snapshot", methods=["GET"])
+def snapshot():
+    ret, frame = cap.read()
+    if not ret:
+        return jsonify({"error": "Failed to capture snapshot"}), 500
+
+    # Ensure snapshots directory exists
+    snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
+    os.makedirs(snapshots_dir, exist_ok=True)
+    filename = f"snapshot_{int(time.time())}.jpg"
+    filepath = os.path.join(snapshots_dir, filename)
+    cv2.imwrite(filepath, frame)
+    
+    # Construct URL for the snapshot (adjust host/port as needed)
+    image_url = f"http://localhost:5000/snapshots/{filename}"
+    return jsonify({"image_url": image_url})
 
 @cctv_bp.route("/cctv/start", methods=["POST"])
 def start_feed():
@@ -83,15 +93,19 @@ def start_feed():
     cap = cv2.VideoCapture(0)  # Reinitialize the camera
     if not cap.isOpened():
         return jsonify({"message": "Error: Cannot open the webcam."}), 500
-    suspicious_count = 0  # Optionally reset the suspicious count
+    suspicious_count = 0  # Reset suspicious count
     return jsonify({"message": "Camera feed started"}), 200
-
 
 @cctv_bp.route("/cctv/stop", methods=["POST"])
 def stop_feed():
-    global cap, is_streaming
-    is_streaming = False  # Signal the generator to stop
+    global cap
     if cap and cap.isOpened():
         cap.release()  # Release the camera
-        cv2.destroyAllWindows()  # Optionally close any OpenCV windows
+        cv2.destroyAllWindows()
     return jsonify({"message": "Camera feed stopped"}), 200
+
+# Optionally, serve the snapshots folder as static files:
+@cctv_bp.route("/snapshots/<path:filename>")
+def download_file(filename):
+    snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
+    return send_from_directory(snapshots_dir, filename)
