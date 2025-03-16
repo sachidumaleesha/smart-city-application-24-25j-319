@@ -25,16 +25,6 @@ interface Report {
   image_url: string
 }
 
-// Sample chart data for the bar chart
-const chartData = Array.from({ length: 31 }, (_, i) => {
-  const d = new Date()
-  d.setDate(d.getDate() - (30 - i)) // Starts 30 days ago and goes to today
-  return {
-    date: d.toISOString().replace("T", " ").substring(0, 16), // e.g., "2024-03-08 14:30"
-    value: Math.floor(Math.random() * 50) + 1,
-  }
-})
-
 // Sample chart config
 const chartConfig: ChartConfig = {
   views: {
@@ -53,6 +43,21 @@ const chartConfig: ChartConfig = {
 export default function ReportEngine() {
   const [reports, setReports] = useState<Report[]>([])
   const [generatedAt, setGeneratedAt] = useState<string>("")
+  // Generate chartData only on client
+  const [chartData, setChartData] = useState<{ date: string; value: number }[]>([])
+
+  useEffect(() => {
+    // Generate chart data on mount to avoid hydration issues (random values change)
+    const data = Array.from({ length: 31 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (30 - i)) // Starts 30 days ago and goes to today
+      return {
+        date: d.toISOString().replace("T", " ").substring(0, 16),
+        value: Math.floor(Math.random() * 50) + 1,
+      }
+    })
+    setChartData(data)
+  }, [])
 
   useEffect(() => {
     // Fetch snapshot reports
@@ -61,40 +66,85 @@ export default function ReportEngine() {
       .then((data) => {
         if (data.reports) {
           setReports(data.reports)
-          // Set the generated date/time when reports are fetched
           setGeneratedAt(new Date().toLocaleString())
         }
       })
       .catch((err) => console.error("Error fetching reports:", err))
   }, [])
 
+  // Compute incident details from reports
+  const incidentTimes = reports
+    .map((r) => new Date(r.timestamp))
+    .sort((a, b) => a.getTime() - b.getTime())
+  const firstIncident = incidentTimes.length > 0 ? incidentTimes[0].toLocaleString() : "N/A"
+  const latestIncident =
+    incidentTimes.length > 0 ? incidentTimes[incidentTimes.length - 1].toLocaleString() : "N/A"
+
   // Function that generates the PDF report
   async function generateReport() {
-    const input = document.getElementById("reportContainer")
+    const input = document.getElementById("reportContainer");
     if (input) {
-      const canvas = await html2canvas(input, { scale: 2, useCORS: true, imageTimeout: 0 })
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF("p", "mm", "a4")
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
-      pdf.text(`Report Generated: ${generatedAt}`, 10, pdfHeight + 10)
-      pdf.save("report.pdf")
+      // Capture the container as canvas
+      const canvas = await html2canvas(input, { scale: 2, useCORS: true, imageTimeout: 0 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdfWidth = 250; // A4 width in mm
+  
+      // Calculate dimensions
+      const canvasAspect = canvas.height / canvas.width;
+      const contentHeight = pdfWidth * canvasAspect;
+      const headerHeight = 20;  // Height for the header
+      const footerHeight = 40;  // Height for the footer
+      const pdfHeight = headerHeight + contentHeight + footerHeight;
+  
+      // Create a jsPDF instance with custom page size
+      const pdf = new jsPDF("p", "mm", [pdfHeight, pdfWidth]);
+  
+      // --- Header ---
+      // Set a colored header background (e.g., cornflower blue)
+      pdf.setFillColor(100, 149, 237);
+      pdf.rect(0, 0, pdfWidth, headerHeight, 'F');
+      // Add header title with white, centered text
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.text("Detection Report Summary", pdfWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+  
+      // --- Main Content ---
+      // Insert the captured image just below the header
+      pdf.addImage(imgData, "PNG", 0, headerHeight, pdfWidth, contentHeight);
+  
+      // --- Footer ---
+      const footerY = headerHeight + contentHeight;
+      // Draw a separating line
+      pdf.setDrawColor(150);
+      pdf.setLineWidth(0.5);
+      pdf.line(10, footerY, pdfWidth - 10, footerY);
+      // Footer text details
+      pdf.setFontSize(12);
+      pdf.setTextColor(50);
+      pdf.text(`Report Generated: ${generatedAt}`, 10, footerY + 10);
+      pdf.text(`Total Snapshots: ${reports.length}`, 10, footerY + 17);
+      pdf.text(`Incident Time Range: ${firstIncident} - ${latestIncident}`, 10, footerY + 24);
+      pdf.text(
+        `Total Random Daily Count (Chart): ${chartData.reduce((acc, cur) => acc + cur.value, 0)}`,
+        10,
+        footerY + 31
+      );
+  
+      // --- Optional Watermark ---
+      // Add a diagonal watermark to the PDF (e.g., "DRAFT")
+      pdf.setTextColor(200, 200, 200);
+      pdf.setFontSize(50);
+      pdf.text("DRAFT", pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
+  
+      pdf.save("report.pdf");
     }
   }
+  
+
+  if (chartData.length === 0) return null
 
   return (
     <div className="p-6 space-y-8">
-      {/* Generate Report Button */}
-      <div>
-        <button
-          onClick={generateReport}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Generate Report
-        </button>
-      </div>
-
       {/* Wrap the entire report in a container for PDF capture */}
       <div id="reportContainer">
         {/* Card with interactive Bar Chart */}
@@ -108,12 +158,8 @@ export default function ReportEngine() {
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:p-6">
-            <ChartContainer
-              config={chartConfig}
-              className="aspect-auto h-[250px] w-full"
-            >
+            <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
               <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
-                {/* Define gradient fill */}
                 <defs>
                   <linearGradient id="gradientFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#0000ff" stopOpacity={0.8} />
@@ -129,10 +175,7 @@ export default function ReportEngine() {
                   minTickGap={32}
                   tickFormatter={(value) => {
                     const date = new Date(value)
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
+                    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
                   }}
                 />
                 <RechartsTooltip
@@ -193,15 +236,27 @@ export default function ReportEngine() {
       <Card>
         <CardHeader>
           <CardTitle>Report Statistics</CardTitle>
-          <CardDescription>
-            Report generated on: {generatedAt}
-          </CardDescription>
+          <CardDescription>Report generated on: {generatedAt}</CardDescription>
         </CardHeader>
         <CardContent>
           <p>Total Snapshots: {reports.length}</p>
-          <p>Total Random Daily Count (Chart): {chartData.reduce((acc, cur) => acc + cur.value, 0)}</p>
-          {/* Additional stats details can be added here */}
+          <p>
+            Total Random Daily Count (Chart):{" "}
+            {chartData.reduce((acc, cur) => acc + cur.value, 0)}
+          </p>
+          <p>First Incident: {firstIncident}</p>
+          <p>Latest Incident: {latestIncident}</p>
         </CardContent>
+
+              {/* Generate Report Button */}
+      <div className="my-10 mx-5">
+        <button
+          onClick={generateReport}
+          className="bg-slate-700 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded"
+        >
+          Generate Report
+        </button>
+      </div>
       </Card>
     </div>
   )
