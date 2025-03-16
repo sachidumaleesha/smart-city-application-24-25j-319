@@ -1,17 +1,26 @@
-"use client";
+import { prisma } from "@/lib/db";
+import { BinStatsCards } from "./waste-management/_components/analytics-data/bin-stats-cards";
 
-export default function Page() {
+async function getBinData() {
+  // Get the current fill levels (latest record for each bin type)
+  const currentFillLevels = await prisma.binFillLevel.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    distinct: ["binType"],
+  });
+
+  return {
+    currentFillLevels,
+  };
+}
+
+export default async function Page() {
+  const { currentFillLevels } = await getBinData();
 
   return (
     <div>
-      User Dashboard
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
-      </div>
-      <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
-      
+      <BinStatsCards data={currentFillLevels} />
     </div>
   );
 }
