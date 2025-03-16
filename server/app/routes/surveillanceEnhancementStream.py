@@ -17,8 +17,9 @@ cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("Error: Cannot open the webcam.")
 
-# Global variable to count suspicious detections
+# Global variables to count suspicious detections and save snapshot reports
 suspicious_count = 0
+snapshotsReports = []  # Each element will be a dict: {timestamp, image_url}
 
 def gen_frames():
     global suspicious_count
@@ -69,42 +70,53 @@ def reset_suspicious_count():
     suspicious_count = 0
     return jsonify({"message": "Suspicious count reset"}), 200
 
-# Snapshot endpoint: capture a frame, save it, and return its URL.
+# Snapshot endpoint: capture a frame, save it, and record the snapshot report.
 @cctv_bp.route("/cctv/snapshot", methods=["GET"])
 def snapshot():
     ret, frame = cap.read()
     if not ret:
         return jsonify({"error": "Failed to capture snapshot"}), 500
 
-    # Ensure snapshots directory exists
     snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
     os.makedirs(snapshots_dir, exist_ok=True)
     filename = f"snapshot_{int(time.time())}.jpg"
     filepath = os.path.join(snapshots_dir, filename)
     cv2.imwrite(filepath, frame)
     
-    # Construct URL for the snapshot (adjust host/port as needed)
+    # Construct URL for the snapshot; adjust if needed for your host/port.
     image_url = f"http://localhost:5000/snapshots/{filename}"
+    
+    # Save the snapshot record (timestamp in ISO format)
+    snapshot_record = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "image_url": image_url,
+    }
+    snapshotsReports.append(snapshot_record)
+    
     return jsonify({"image_url": image_url})
+
+# New endpoint: return all snapshot reports.
+@cctv_bp.route("/cctv/reports", methods=["GET"])
+def get_reports():
+    return jsonify({"reports": snapshotsReports})
 
 @cctv_bp.route("/cctv/start", methods=["POST"])
 def start_feed():
     global cap, suspicious_count
-    cap = cv2.VideoCapture(0)  # Reinitialize the camera
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         return jsonify({"message": "Error: Cannot open the webcam."}), 500
-    suspicious_count = 0  # Reset suspicious count
+    suspicious_count = 0
     return jsonify({"message": "Camera feed started"}), 200
 
 @cctv_bp.route("/cctv/stop", methods=["POST"])
 def stop_feed():
     global cap
     if cap and cap.isOpened():
-        cap.release()  # Release the camera
+        cap.release()
         cv2.destroyAllWindows()
     return jsonify({"message": "Camera feed stopped"}), 200
 
-# Optionally, serve the snapshots folder as static files:
 @cctv_bp.route("/snapshots/<path:filename>")
 def download_file(filename):
     snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
