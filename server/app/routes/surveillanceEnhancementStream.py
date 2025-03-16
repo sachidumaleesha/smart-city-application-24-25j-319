@@ -8,9 +8,13 @@ from flask import Blueprint, Response, jsonify
 cctv_bp = Blueprint("cctv", __name__)
 
 # Load the trained model (if needed for overlay, etc.)
-model = tf.keras.models.load_model(
-    r"C:\Users\nipun\Downloads\surveillance_enhancement_v6.h5", compile=False
-)
+# model = tf.keras.models.load_model(
+#     r"C:\Users\nipun\Downloads\surveillance_enhancement_v6.h5", compile=False
+# )
+
+# Load the trained model from a relative path (assumes the model is in 'dbModels' folder)
+model_path = os.path.join(os.path.dirname(__file__), "..", "dbModels", "surveillance_enhancement_v6.h5")
+model = tf.keras.models.load_model(model_path, compile=False)
 
 IMAGE_SIZE = (128, 128)
 
@@ -85,8 +89,9 @@ def start_feed():
 
 @cctv_bp.route("/cctv/stop", methods=["POST"])
 def stop_feed():
-    global cap
+    global cap, is_streaming
+    is_streaming = False  # Signal the generator to stop
     if cap and cap.isOpened():
         cap.release()  # Release the camera
-        cv2.destroyAllWindows()  # (Optional) Close any OpenCV windows
+        cv2.destroyAllWindows()  # Optionally close any OpenCV windows
     return jsonify({"message": "Camera feed stopped"}), 200
