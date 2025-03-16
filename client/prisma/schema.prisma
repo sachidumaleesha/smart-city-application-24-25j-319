@@ -30,3 +30,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model BinFillLevel {
+  id          String   @id @default(cuid())
+  binType     String   // "paper", "plastic", "organic", "glass"
+  distance    Float    // Distance in cm
+  fillPercent Float    // Fill percentage (0-100)
+  binHeight   Float    // Height of the bin in cm
+  isAlert     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
