@@ -19,8 +19,11 @@ export default async function Page() {
   const { currentFillLevels } = await getBinData();
 
   return (
-    <div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
+      <div>Survilliance Component</div>
       <BinStatsCards data={currentFillLevels} />
+      <div>Accident Detection</div>
+      <div>Parking Management</div>
     </div>
   );
 }
