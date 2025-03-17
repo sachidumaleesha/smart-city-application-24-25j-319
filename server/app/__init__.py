@@ -9,9 +9,9 @@ def create_app():
     # Register accident detection blueprint
 
     from app.routes.accidentDetection.youtubeDetection import youtube_bp
-    # from app.routes.accidentDetection.accidentDetection import accident_bp
+    from app.routes.accidentDetection.accidentDetection import accident_bp
     # from app.routes.accidentDetection.accidenttesst import accident_bp
-    from app.routes.accidentDetection.accident import accident_bp
+    # from app.routes.accidentDetection.accident import accident_bp
     from .routes.surveillanceEnhancementStream import cctv_bp
     from .routes.surveillance_enhancement import cctv_control_bp
 
