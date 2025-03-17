@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useRef } from "react";
 
-const cameras = ["Kaduwela", "Malabe", "Welivita", "SLIIT"];
+const cameras = ["Kaduwela", "Malabe", "Welivita", "Pittugala"];
 const ALERT_INTERVAL = 30 * 1000; // 30 seconds cooldown
 
 const AccidentDetectionPage = () => {
