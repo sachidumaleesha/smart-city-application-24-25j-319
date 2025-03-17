@@ -142,6 +142,16 @@ export const data = {
       url: `/${baseURL}/parking-management`,
       breadcrumb: "parking-management",
       icon: CircleParking,
+      items: [
+        {
+          title: "Free Space Counter",
+          url: `/${baseURL}/parking-management/free-space-counter`,
+        },
+        {
+          title: "Anpr",
+          url: `/${baseURL}/parking-management/anpr`,
+        },
+      ],
     },
     {
       title: "Settings",
