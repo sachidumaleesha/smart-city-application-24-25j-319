@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { BinStatsCards } from "./waste-management/_components/analytics-data/bin-stats-cards";
-import { Component as ReportEngineClient } from "./surveillance-enhancement/reportengine/ReportEngineClient";
+import { Component as ReportEngineClient } from "./surveillance-enhancement/reportengine/Report03";
+import { Component as VehiclePark } from "./surveillance-enhancement/reportengine/Report02";
 import DaysChart from "./accident-detection/_components/analytics-data/days-chart";
 
 async function getBinData() {
@@ -23,11 +24,11 @@ export default async function Page() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
       
-      <div>Survilliance Component<ReportEngineClient /></div>
+      <div><h1 className="text-xl font-semibold mb-4">Survilliance Component </h1><ReportEngineClient /></div>
 
       <BinStatsCards data={currentFillLevels} />
       <DaysChart />
-      <div>Parking Management</div>
+      <div><h1 className="text-xl font-semibold mb-4">Parking Management</h1><VehiclePark /></div>
     </div>
   );
 }
