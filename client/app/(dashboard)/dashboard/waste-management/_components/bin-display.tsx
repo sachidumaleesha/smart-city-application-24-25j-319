@@ -19,7 +19,7 @@ export default function BinDisplay({ activeClass }: BinDisplayProps) {
   // Define bins with their image paths
   const bins: BinInfo[] = [
     {
-      name: "biological",
+      name: "organic",
       color: "green",
       textColor: "text-green-800",
       images: {

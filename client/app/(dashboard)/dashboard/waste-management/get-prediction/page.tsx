@@ -44,7 +44,7 @@ export default function WasteManagementPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const response = await fetch("http://127.0.0.1:5000/api/wasteManagement/predict", {
+      const response = await fetch("https://web-production-08d02.up.railway.app/api/wasteManagement/predict", {
         method: "POST",
         body: formData,
       })
@@ -54,6 +54,7 @@ export default function WasteManagementPage() {
       }
 
       const result = await response.json()
+      console.log(result)
       setPrediction(result)
     } catch (err) {
       setError(`Failed to classify image: ${err instanceof Error ? err.message : String(err)}`)

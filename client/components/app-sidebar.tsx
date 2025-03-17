@@ -80,10 +80,26 @@ export const data = {
       icon: LayoutDashboard,
     },
     {
+      title: "Add User",
+      url: `/${baseURL}/add-user`,
+      breadcrumb: "add-user",
+      icon: User,
+    },
+    {
       title: "Surveillance Enhancement",
       url: `/${baseURL}/surveillance-enhancement`,
       breadcrumb: "surveillance-enhancement",
       icon: PersonStanding,
+      items: [
+        {
+          title: "CCTV Control Panel",
+          url: `/${baseURL}/surveillance-enhancement/controlPanel`,
+        },
+        {
+          title: "Report Engine",
+          url: `/${baseURL}/surveillance-enhancement/reportengine`,
+        },
+      ],
     },
     {
       title: "Waste Management",
@@ -103,9 +119,19 @@ export const data = {
     },
     {
       title: "Accident Detection",
-      url: `/${baseURL}/accident-detection`,
-      breadcrumb: "accident-detection",
+      url: "/admin/accident-detection",
+      breadcrumb: "accident detection",
       icon: CarTaxiFront,
+      items: [
+        {
+          title: "Camera",
+          url: `/${baseURL}/accident-detection/camera`,
+        },
+        {
+          title: "Youtube Link",
+          url: `/${baseURL}/accident-detection/youtube-link`,
+        },
+      ],
     },
     {
       title: "Parking Management",
