@@ -40,7 +40,7 @@ CAMERAS = {
     "Kaduwela": 0,
     "Malabe": 1,
     "Welivita": 2,
-    "SLIIT": 3
+    "Pittugala": 3
 }
 
 # ✅ Hyperparameters
@@ -104,14 +104,14 @@ def verify_with_gemini(frame):
         )
 
         result_text = response.text
-        print(f"🔹 Gemini Raw Response: {result_text}")
+        print(f"🔹 Raw Response: {result_text}")
 
         is_accident = '"accident"' in result_text.lower() or "'accident'" in result_text.lower()
 
         return is_accident, result_text
 
     except Exception as e:
-        print(f"❌ Gemini verification error: {str(e)}")
+        print(f"❌ Ai verification error: {str(e)}")
         return False, None
 
 
