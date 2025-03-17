@@ -110,7 +110,7 @@ export function Component() {
           <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 5 months
+          Showing total Detections for the last 5 months
         </div>
       </CardFooter>
     </Card>
