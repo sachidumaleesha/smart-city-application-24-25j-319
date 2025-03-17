@@ -18,11 +18,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+
 const chartData = [
   { browser: "Morning", visitors: 27, fill: "var(--color-chrome)" },
   { browser: "Afternoon", visitors: 20, fill: "var(--color-safari)" },
   { browser: "Evening", visitors: 17, fill: "var(--color-edge)" },
-  { browser: "Night", visitors: 19, fill: "var(--color-other)" },]
+  { browser: "Night", visitors: 19, fill: "var(--color-other)" },
+]
 
 const chartConfig = {
   visitors: {
@@ -110,6 +112,18 @@ export function Component() {
             </Pie>
           </PieChart>
         </ChartContainer>
+        {/* Legend below the chart */}
+        <div className="flex justify-center mt-4 space-x-4">
+          {chartData.map((item, index) => (
+            <div className="flex items-center" key={index}>
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{ background: item.fill }}
+              />
+              <span className="ml-2 text-sm">{item.browser}</span>
+            </div>
+          ))}
+        </div>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">

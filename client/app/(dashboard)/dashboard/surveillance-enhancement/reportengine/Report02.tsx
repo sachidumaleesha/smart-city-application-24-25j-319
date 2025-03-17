@@ -48,13 +48,14 @@ const chartConfig = {
 
 export function Component() {
   return (
+    
     <Card>
       <CardHeader>
         <CardTitle>Threats Detection Count By Month</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} style={{ height: '214px', width: '750px' }}>
           <BarChart
             accessibilityLayer
             data={chartData}
@@ -105,12 +106,12 @@ export function Component() {
           </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
+      <CardFooter className="flex-col items-center gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
           <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 5 months
+          Showing total Detections for the last 5 months
         </div>
       </CardFooter>
     </Card>
