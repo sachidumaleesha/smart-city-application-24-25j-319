@@ -1,4 +1,4 @@
-# filepath: d:\RESEARCH\PythonFiles\CodeBase\smart-city-application-24-25j-319\server\app\_init_.py
+# filepath: d:\RESEARCH\PythonFiles\CodeBase\smart-city-application-24-25j-319\server\app\__init__.py
 from flask import Flask
 from flask_cors import CORS
 
@@ -28,3 +28,4 @@ def create_app():
     app.register_blueprint(cctv_control_bp, url_prefix="/cctv")
 
     return app
+
