@@ -13,7 +13,7 @@ model = tf.keras.models.load_model(model_path, compile=False)
 
 IMAGE_SIZE = (128, 128)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 if not cap.isOpened():
     print("Error: Cannot open the webcam.")
 
@@ -103,7 +103,7 @@ def get_reports():
 @cctv_bp.route("/cctv/start", methods=["POST"])
 def start_feed():
     global cap, suspicious_count
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         return jsonify({"message": "Error: Cannot open the webcam."}), 500
     suspicious_count = 0

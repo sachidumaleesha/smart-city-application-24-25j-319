@@ -44,7 +44,7 @@ const SurveillanceEnhancementPage = () => {
 
       // Inline WhatsApp notification logic (custom text message)
       const PHONE_NUMBER_ID = "628213070365635";
-      const WHATSAPP_TOKEN = "EAA4qcvtPL78BO95L7eQAbyZCAVzoUnBTWS7r0sRR6EZBGPNYEwcMVcFINezhIZABUFs9TvvDRMj8ixmHYIKW9DGPP3eAYbguiQts33gjOEIbAyXqgtWZBsgtDIj0X5w2JeyZCZCDm33ujzUgxoXPu2moOskRX6ct56qlTpPnhFb0SNYl3Ko9CFIlWne5vbWT9FVGAIPpk8uGTSAKNFegJC0XrU3RgZD";
+      const WHATSAPP_TOKEN = "EAAX4cUkrZCcsBOZCvphxM0ZAOxMfvvSWsXq8RxEIIbCOI6kr64EeZAC2JdohDV2LEX1bipLWaZAKb1TgYd0Jq4lox0RdZCoREuSa3iZCxfwLgsKYULEoZB16wJAnt1DLuMbM28zotkjaT0qHYqGLX1joriYNx8o5k8SzDvcYN2rUOvyxvMNgNWsQFXX7YaOrIwQjD2PRgmFxXs7QgOyequdtEgILnbZBm";
       const RECIPIENT_NUMBER = "94705195786";
 
       if (!PHONE_NUMBER_ID || !WHATSAPP_TOKEN || !RECIPIENT_NUMBER) {
