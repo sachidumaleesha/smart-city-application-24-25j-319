@@ -1,10 +1,8 @@
-# filepath: d:\RESEARCH\PythonFiles\CodeBase\smart-city-application-24-25j-319\server\app\__init__.py
 from flask import Flask
 from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    # CORS(app, resources={r"/api/": {"origins": ""}})
     CORS(app)  # Enable CORS for Next.js requests
 
     # Register accident detection blueprint
@@ -16,6 +14,11 @@ def create_app():
 
     # from app.routes.wasteManagement.wasteTypeDetection import wasteManagement_bp
     # app.register_blueprint(wasteManagement_bp, url_prefix="/api/wasteManagement")
+
+    from app.routes.parkingManagement.spacePicker.spacePicker import parking_bp
+    app.register_blueprint(parking_bp, url_prefix="/api/spacePicker")
+    from app.routes.parkingManagement.anpr import anpr_bp
+    app.register_blueprint(anpr_bp, url_prefix="/api/anpr")   # Register ANPR API routes
     
     app.register_blueprint(accident_bp, url_prefix="/api/accidentDetection")
     app.register_blueprint(youtube_bp, url_prefix="/api/youtubeDetection")
