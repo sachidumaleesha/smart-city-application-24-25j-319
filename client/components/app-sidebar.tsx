@@ -103,9 +103,19 @@ export const data = {
     },
     {
       title: "Accident Detection",
-      url: `/${baseURL}/accident-detection`,
-      breadcrumb: "accident-detection",
+      url: "/admin/accident-detection",
+      breadcrumb: "accident detection",
       icon: CarTaxiFront,
+      items: [
+        {
+          title: "Camera",
+          url: `/${baseURL}/accident-detection/camera`,
+        },
+        {
+          title: "Youtube Link",
+          url: `/${baseURL}/accident-detection/youtube-link`,
+        },
+      ],
     },
     {
       title: "Parking Management",
