@@ -58,7 +58,7 @@ export function Component() {
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Threatd Detection Count</CardTitle>
+        <CardTitle>Threats Detection Count</CardTitle>
         <CardDescription>January - March 2025</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">

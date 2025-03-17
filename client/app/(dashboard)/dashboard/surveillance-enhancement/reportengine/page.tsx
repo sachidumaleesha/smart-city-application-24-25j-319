@@ -134,7 +134,7 @@ export default function ReportEngine() {
       // Add a diagonal watermark to the PDF (e.g., "DRAFT")
       pdf.setTextColor(200, 200, 200);
       pdf.setFontSize(50);
-      pdf.text("DRAFT", pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
+      pdf.text("", pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
   
       pdf.save("report.pdf");
     }
