@@ -90,6 +90,16 @@ export const data = {
       url: `/${baseURL}/surveillance-enhancement`,
       breadcrumb: "surveillance-enhancement",
       icon: PersonStanding,
+      items: [
+        {
+          title: "CCTV Control Panel",
+          url: `/${baseURL}/surveillance-enhancement/controlPanel`,
+        },
+        {
+          title: "Report Engine",
+          url: `/${baseURL}/surveillance-enhancement/reportengine`,
+        },
+      ],
     },
     {
       title: "Waste Management",
