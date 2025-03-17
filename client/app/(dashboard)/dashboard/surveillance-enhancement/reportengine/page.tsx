@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react"
 import { BarChart, Bar, CartesianGrid, XAxis, Tooltip as RechartsTooltip } from "recharts"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
+import { Component as ReportEngineClient } from "./ReportEngineClient";
+import { Component as Report02 } from "./Report02";
 
 // Shad UI Card & Chart components – adjust the import paths as needed.
 import {
@@ -151,7 +153,7 @@ export default function ReportEngine() {
         <Card>
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
             <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-              <CardTitle>Bar Chart – Interactive</CardTitle>
+              <CardTitle>Surveillance Component – Interactive</CardTitle>
               <CardDescription>
                 Aggregated suspicious activities over dates.
               </CardDescription>
@@ -198,6 +200,14 @@ export default function ReportEngine() {
             </ChartContainer>
           </CardContent>
         </Card>
+
+        <div>
+          <h2 className="text-lg font-bold mb-2"></h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ReportEngineClient />
+            <Report02 />
+          </div>
+        </div>
 
         {/* Snapshots Section */}
         <Card>
