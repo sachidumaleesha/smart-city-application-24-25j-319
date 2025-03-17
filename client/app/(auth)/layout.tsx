@@ -24,15 +24,13 @@ export default function AuthLayout({
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-primary">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            <div>App Name 👋.</div>
+            <div>Smart City 🏙️.</div>
           </Link>
         </div>
         <div className="absolute z-10 p-6 md:p-10 bottom-0 mt-auto">
           <blockquote>
             <p className="text-lg text-white">
-              &ldquo;App Name 👋 AI is a game changer for me. I have been able
-              to generate high quality professional headshots within minutes. It
-              has saved me countless hours of work and cost as well.&rdquo;
+              &ldquo;​Welcome to our Smart City Portal, where we harness cutting-edge technologies to enhance urban living. Our integrated solutions encompass smart parking management, intelligent waste systems, advanced surveillance, and real-time accident detection, all designed to create a more connected, efficient, and safer urban environment.&rdquo;
             </p>
             <footer className="text-sm text-white">
               <cite>David S.</cite>

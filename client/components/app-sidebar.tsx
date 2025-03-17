@@ -80,6 +80,12 @@ export const data = {
       icon: LayoutDashboard,
     },
     {
+      title: "Add User",
+      url: `/${baseURL}/add-user`,
+      breadcrumb: "add-user",
+      icon: User,
+    },
+    {
       title: "Surveillance Enhancement",
       url: `/${baseURL}/surveillance-enhancement`,
       breadcrumb: "surveillance-enhancement",
