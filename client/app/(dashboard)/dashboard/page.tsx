@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { BinStatsCards } from "./waste-management/_components/analytics-data/bin-stats-cards";
+import DaysChart from "./accident-detection/_components/analytics-data/days-chart";
 
 async function getBinData() {
   // Get the current fill levels (latest record for each bin type)
@@ -22,7 +23,7 @@ export default async function Page() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
       <div>Survilliance Component</div>
       <BinStatsCards data={currentFillLevels} />
-      <div>Accident Detection</div>
+      <DaysChart />
       <div>Parking Management</div>
     </div>
   );
