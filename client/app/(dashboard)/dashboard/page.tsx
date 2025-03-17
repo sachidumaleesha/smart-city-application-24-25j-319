@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { BinStatsCards } from "./waste-management/_components/analytics-data/bin-stats-cards";
 import { Component as ReportEngineClient } from "./surveillance-enhancement/reportengine/Report03";
-import { Component as VehiclePark } from "./surveillance-enhancement/reportengine/Report02";
+import { Component as VehiclePark } from "./parking-management/charts/pages";
 import DaysChart from "./accident-detection/_components/analytics-data/days-chart";
 
 async function getBinData() {
