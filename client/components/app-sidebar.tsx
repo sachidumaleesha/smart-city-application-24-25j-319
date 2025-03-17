@@ -99,6 +99,10 @@ export const data = {
           title: "Report Engine",
           url: `/${baseURL}/surveillance-enhancement/reportengine`,
         },
+        {
+          title: "Analyse",
+          url: `/${baseURL}/surveillance-enhancement/analyser`,
+        },
       ],
     },
     {
