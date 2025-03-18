@@ -30,7 +30,7 @@ PARKING_RATE_PER_HOUR = 100  # Set your price here
 
 # ✅ Gemini API and ESP32 setup
 GEMINI_API_KEY = "AIzaSyAeHm3GEPbEUYigXAf1p9gfO2mQrbDlycQ"
-ESP32_IP_ADDRESS = "http://192.168.1.13"  # ESP32 IP Address
+ESP32_IP_ADDRESS = "http://192.168.1.10"  # ESP32 IP Address
 
 # ✅ Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
