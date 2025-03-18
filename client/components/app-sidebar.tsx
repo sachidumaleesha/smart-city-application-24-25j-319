@@ -151,6 +151,10 @@ export const data = {
           title: "Anpr",
           url: `/${baseURL}/parking-management/anpr`,
         },
+        {
+          title: "Vehicle Details",
+          url: `/${baseURL}/parking-management/vehicle-details`,
+        },
       ],
     },
     {

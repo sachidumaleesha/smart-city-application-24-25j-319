@@ -130,7 +130,7 @@ export default function ANPRPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-3xl font-bold mb-6">Gemini ANPR Detection & Gate Control</h1>
+      <h1 className="text-3xl font-bold mb-6"> ANPR Detection & Gate Control</h1>
 
       <video ref={videoRef} autoPlay playsInline muted className="w-[440px] h-[280px] border" />
       <canvas ref={canvasRef} width="440" height="280" hidden />
