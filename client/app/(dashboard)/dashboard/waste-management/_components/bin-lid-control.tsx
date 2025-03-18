@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react"
@@ -34,6 +34,19 @@ export default function BinLidControl() {
   const [fetchingLevels, setFetchingLevels] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string>("")
   const [openTimestamps, setOpenTimestamps] = useState<Record<string, number>>({})
+
+  // Track which bins have already had Telegram alerts sent
+  const [alertedBins, setAlertedBins] = useState<Record<string, boolean>>({})
+
+  // Use a ref to track if the component is mounted
+  const isMounted = useRef(true)
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
 
   // Fetch bin fill levels with automatic 5-second refresh
   useEffect(() => {
@@ -72,15 +85,122 @@ export default function BinLidControl() {
     return () => clearInterval(intervalId)
   }, [])
 
-  // Check for bins that have been open too long
+  // Function to check if a bin has been open for more than 30 seconds
+  const isOpenTooLong = (binId: string) => {
+    if (!openBins[binId] || !openTimestamps[binId]) return false
+    const openDuration = Date.now() - openTimestamps[binId]
+    return openDuration > 30000 // 30000ms = 30 seconds
+  }
+
+  // Dedicated function to send Telegram alerts
+  const sendTelegramAlert = async (binName: string, openDuration: number) => {
+    console.log(`Attempting to send Telegram alert for ${binName} bin open for ${openDuration} minutes`)
+
+    try {
+      const response = await fetch("/api/waste-management/bin-telegram", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          binName,
+          openDuration,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`HTTP error ${response.status}: ${errorText}`)
+        return false
+      }
+
+      const data = await response.json()
+      console.log("Telegram API response:", data)
+
+      if (!data.success) {
+        console.error("Failed to send Telegram alert:", data.error)
+        return false
+      }
+
+      console.log(`Successfully sent Telegram alert for ${binName} bin`)
+      return true
+    } catch (error) {
+      console.error("Error sending Telegram alert:", error)
+      return false
+    }
+  }
+
+  // Dedicated useEffect for Telegram notifications
+  useEffect(() => {
+    // Function to check bins and send alerts
+    const checkBinsAndSendAlerts = async () => {
+      console.log("Checking bins for Telegram alerts...")
+
+      for (const bin of bins) {
+        const binId = bin.id
+
+        // Check if bin is open too long
+        if (isOpenTooLong(binId)) {
+          console.log(`${bin.name} bin is open too long`)
+
+          // Calculate open duration in minutes (or fraction of minutes)
+          const openDurationMs = Date.now() - openTimestamps[binId]
+          const openDurationMinutes = Math.max(1, Math.floor(openDurationMs / 60000))
+
+          // Only send alert if we haven't already alerted for this bin
+          if (!alertedBins[binId]) {
+            console.log(`Sending Telegram alert for ${bin.name} bin`)
+
+            // Send the Telegram alert
+            const success = await sendTelegramAlert(bin.name, openDurationMinutes)
+
+            if (success && isMounted.current) {
+              // Mark this bin as alerted
+              setAlertedBins((prev) => ({
+                ...prev,
+                [binId]: true,
+              }))
+
+              console.log(`${bin.name} bin marked as alerted`)
+            }
+          } else {
+            console.log(`Already sent alert for ${bin.name} bin, skipping`)
+          }
+        } else if (alertedBins[binId] && (!openBins[binId] || !openTimestamps[binId])) {
+          // Reset alert status when bin is closed
+          console.log(`Resetting alert status for ${bin.name} bin`)
+
+          if (isMounted.current) {
+            setAlertedBins((prev) => ({
+              ...prev,
+              [binId]: false,
+            }))
+          }
+        }
+      }
+    }
+
+    // Run the check immediately
+    checkBinsAndSendAlerts()
+
+    // Set up interval to check every 10 seconds
+    const intervalId = setInterval(checkBinsAndSendAlerts, 10000)
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId)
+  }, [bins, openBins, openTimestamps, alertedBins])
+
+  // Remove the original useEffect for toast notifications and replace with this one
+  // that only shows toast notifications without sending Telegram alerts
   useEffect(() => {
     const intervalId = setInterval(() => {
       bins.forEach((bin) => {
         if (isOpenTooLong(bin.id)) {
-          // Only show the toast if we haven't shown it recently for this bin
-          // We could add another state to track this, but for simplicity we'll just check
-          const openDuration = Math.floor((Date.now() - openTimestamps[bin.id]) / 60000)
-          toast.error(`${bin.name} bin open for ${openDuration} minute${openDuration > 1 ? "s" : ""}`, {
+          // Calculate open duration in minutes
+          const openDuration = Math.max(1, Math.floor((Date.now() - openTimestamps[bin.id]) / 60000))
+
+          // Show toast notification
+          toast.error(`${bin.name} bin open for ${openDuration} minute${openDuration !== 1 ? "s" : ""}`, {
             description: "Please close the bin lid to prevent odors and pests.",
             id: `bin-open-too-long-${bin.id}`, // Use an ID to prevent duplicate toasts
             duration: 10000, // Show for 10 seconds
@@ -90,18 +210,18 @@ export default function BinLidControl() {
     }, 10000) // Check every 10 seconds
 
     return () => clearInterval(intervalId)
-  }, [openBins, openTimestamps, bins])
+  }, [bins, openBins, openTimestamps])
 
-  // Check if a bin is too full to open (80% or more)
+  // Check if a bin is too full to open (70% or more)
   const isBinTooFull = (binId: string) => {
-    return (fillLevels[binId] || 0) >= 80
+    return (fillLevels[binId] || 0) >= 70
   }
 
   const toggleBin = async (binId: string) => {
     // If trying to open a bin that's too full, show warning and don't proceed
     if (!openBins[binId] && isBinTooFull(binId)) {
       toast.error(`Cannot open ${bins.find((bin) => bin.id === binId)?.name} bin`, {
-        description: "This bin is 80% or more full and cannot be opened. Please empty the bin first.",
+        description: "This bin is 70% or more full and cannot be opened. Please empty the bin first.",
       })
       return
     }
@@ -129,6 +249,14 @@ export default function BinLidControl() {
           ...prev,
           [binId]: newPosition === "open" ? Date.now() : 0,
         }))
+
+        // Reset alert status when bin is closed
+        if (newPosition === "close") {
+          setAlertedBins((prev) => ({
+            ...prev,
+            [binId]: false,
+          }))
+        }
 
         // Use sonner toast
         toast.success(`${bins.find((bin) => bin.id === binId)?.name} bin ${newPosition}ed`, {
@@ -174,13 +302,6 @@ export default function BinLidControl() {
     } finally {
       setFetchingLevels(false)
     }
-  }
-
-  // Function to check if a bin has been open for more than 1 minute
-  const isOpenTooLong = (binId: string) => {
-    if (!openBins[binId] || !openTimestamps[binId]) return false
-    const openDuration = Date.now() - openTimestamps[binId]
-    return openDuration > 60000 // 60000ms = 1 minute
   }
 
   return (
@@ -283,7 +404,7 @@ export default function BinLidControl() {
                     <div className="flex items-center gap-4">
                       {openTooLong && (
                         <span className="text-red-600 text-xs font-medium">
-                          Open for {Math.floor((Date.now() - openTimestamps[bin.id]) / 60000)} min
+                          Open for {Math.floor((Date.now() - openTimestamps[bin.id]) / 60000) || 1} min
                         </span>
                       )}
                       <Button
