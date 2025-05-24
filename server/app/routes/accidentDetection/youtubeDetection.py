@@ -22,8 +22,19 @@ def get_custom_objects():
                 if isinstance(batch_shape, (list, tuple)):
                     input_shape = batch_shape[1:]
                     batch_size = batch_shape[0]
+            
+            # Convert input_shape to TensorShape if it's not already
+            if input_shape is not None and not isinstance(input_shape, tf.TensorShape):
+                input_shape = tf.TensorShape(input_shape)
+            
             super().__init__(input_shape=input_shape, batch_size=batch_size,
                            dtype=dtype, sparse=sparse, name=name, **kwargs)
+
+        def get_config(self):
+            config = super().get_config()
+            if 'batch_shape' in config:
+                config['batch_shape'] = tf.TensorShape(config['batch_shape']).as_list()
+            return config
 
     class DTypePolicy:
         def __init__(self, name):
@@ -51,7 +62,7 @@ def get_custom_objects():
         def from_config(cls, config):
             if isinstance(config, dict) and 'name' in config:
                 return cls(config['name'])
-            return cls('float32')  # Default fallback
+            return cls('float32')
 
         def get_config(self):
             return {'name': self.name}
@@ -65,6 +76,12 @@ def get_custom_objects():
                     kwargs['dtype'] = dtype_config['config'].get('name', 'float32')
             super().__init__(*args, **kwargs)
 
+        def get_config(self):
+            config = super().get_config()
+            if isinstance(config.get('input_shape'), (list, tuple)):
+                config['input_shape'] = tf.TensorShape(config['input_shape']).as_list()
+            return config
+
     # Return all custom objects needed
     return {
         'InputLayer': CustomInputLayer,
@@ -76,13 +93,28 @@ def get_custom_objects():
 def load_model_with_retries(max_retries=3, delay=1):
     """Load model with multiple retries and proper error handling"""
     last_exception = None
+    
+    # Define expected input shape
+    expected_shape = (None, 250, 250, 3)
+    
     for attempt in range(max_retries):
         try:
             print(f"⌛ Loading model from {MODEL_PATH} (Attempt {attempt + 1}/{max_retries})")
-            with custom_object_scope(get_custom_objects()):
-                model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+            
+            # Create custom objects with proper input shape handling
+            custom_objects = get_custom_objects()
+            
+            with custom_object_scope(custom_objects):
+                # Try loading with explicit input shape
+                model = tf.keras.models.load_model(
+                    MODEL_PATH,
+                    compile=False,
+                    custom_objects=custom_objects
+                )
+                
                 print(f"✅ Model loaded successfully with input shape: {model.input_shape}")
                 return model
+                
         except Exception as e:
             last_exception = e
             print(f"❌ Error loading model (Attempt {attempt + 1}): {str(e)}")
