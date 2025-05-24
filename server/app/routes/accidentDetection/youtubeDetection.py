@@ -16,34 +16,35 @@ MODEL_PATH = "app/mlModels/modelNew.h5"
 def get_custom_objects():
     class CustomInputLayer(tf.keras.layers.InputLayer):
         def __init__(self, input_shape=None, batch_size=None, dtype=None, sparse=False, name=None, **kwargs):
-            if input_shape and batch_size:
-                batch_shape = (batch_size,) + tuple(input_shape)
-            else:
-                batch_shape = None
-            super().__init__(input_shape=input_shape, batch_size=batch_size, 
-                           batch_shape=batch_shape, dtype=dtype, sparse=sparse, 
-                           name=name, **kwargs)
+            if 'batch_shape' in kwargs:
+                batch_shape = kwargs.pop('batch_shape')
+                input_shape = batch_shape[1:] if len(batch_shape) > 1 else batch_shape
+                batch_size = batch_shape[0]
+            super().__init__(input_shape=input_shape, batch_size=batch_size,
+                           dtype=dtype, sparse=sparse, name=name, **kwargs)
 
         def get_config(self):
             config = super().get_config()
-            if 'batch_shape' in config:
-                batch_shape = config.pop('batch_shape')
-                if batch_shape is not None:
-                    config['input_shape'] = batch_shape[1:] if len(batch_shape) > 1 else batch_shape
-                    config['batch_size'] = batch_shape[0]
             return config
 
-    return {'CustomInputLayer': CustomInputLayer}
+    # Register both names to handle both cases
+    return {
+        'InputLayer': CustomInputLayer,
+        'CustomInputLayer': CustomInputLayer
+    }
 
 try:
+    print("⌛ Loading model from:", MODEL_PATH)
     model = tf.keras.models.load_model(MODEL_PATH, custom_objects=get_custom_objects())
+    print("✅ Model loaded successfully")
 except Exception as e:
-    print(f"Error loading model: {str(e)}")
-    # Fallback: try loading with compile=False
+    print(f"❌ Error loading model: {str(e)}")
     try:
+        print("⌛ Attempting fallback load with compile=False...")
         model = tf.keras.models.load_model(MODEL_PATH, compile=False, custom_objects=get_custom_objects())
+        print("✅ Model loaded successfully with fallback method")
     except Exception as e:
-        print(f"Error loading model (fallback): {str(e)}")
+        print(f"❌ Error loading model (fallback): {str(e)}")
         raise
 
 # ✅ Preprocess the frame
