@@ -15,14 +15,25 @@ MODEL_PATH = "app/mlModels/modelNew.h5"
 
 def get_custom_objects():
     class CustomInputLayer(tf.keras.layers.InputLayer):
+        def __init__(self, input_shape=None, batch_size=None, dtype=None, sparse=False, name=None, **kwargs):
+            if input_shape and batch_size:
+                batch_shape = (batch_size,) + tuple(input_shape)
+            else:
+                batch_shape = None
+            super().__init__(input_shape=input_shape, batch_size=batch_size, 
+                           batch_shape=batch_shape, dtype=dtype, sparse=sparse, 
+                           name=name, **kwargs)
+
         def get_config(self):
             config = super().get_config()
             if 'batch_shape' in config:
-                input_shape = config.pop('batch_shape')
-                config['input_shape'] = input_shape[1:]
+                batch_shape = config.pop('batch_shape')
+                if batch_shape is not None:
+                    config['input_shape'] = batch_shape[1:] if len(batch_shape) > 1 else batch_shape
+                    config['batch_size'] = batch_shape[0]
             return config
 
-    return {'InputLayer': CustomInputLayer}
+    return {'CustomInputLayer': CustomInputLayer}
 
 try:
     model = tf.keras.models.load_model(MODEL_PATH, custom_objects=get_custom_objects())
