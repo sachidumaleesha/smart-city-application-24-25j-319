@@ -26,10 +26,25 @@ def get_custom_objects():
 
     class DTypePolicy:
         def __init__(self, name):
-            self.name = name
+            self._name = name
+            self._dtype = tf.dtypes.as_dtype(name)
+
+        @property
+        def name(self):
+            return self._name
+
+        @property
+        def compute_dtype(self):
+            return self._dtype
+
+        @property
+        def variable_dtype(self):
+            return self._dtype
 
         def __eq__(self, other):
-            return self.name == getattr(other, 'name', None)
+            if hasattr(other, 'name'):
+                return self.name == other.name
+            return False
 
         @classmethod
         def from_config(cls, config):
@@ -45,21 +60,28 @@ def get_custom_objects():
         'DTypePolicy': DTypePolicy
     }
 
+def load_model_with_retries(max_retries=3, delay=1):
+    """Load model with multiple retries and proper error handling"""
+    for attempt in range(max_retries):
+        try:
+            print(f"⌛ Loading model from {MODEL_PATH} (Attempt {attempt + 1}/{max_retries})")
+            with custom_object_scope(get_custom_objects()):
+                return tf.keras.models.load_model(MODEL_PATH, compile=False)
+        except Exception as e:
+            print(f"❌ Error loading model (Attempt {attempt + 1}): {str(e)}")
+            if attempt < max_retries - 1:
+                print(f"⌛ Waiting {delay} seconds before retrying...")
+                time.sleep(delay)
+            else:
+                print("❌ All attempts to load model failed")
+                raise
+
 try:
-    print("⌛ Loading model from:", MODEL_PATH)
-    with custom_object_scope(get_custom_objects()):
-        model = tf.keras.models.load_model(MODEL_PATH)
+    model = load_model_with_retries()
     print("✅ Model loaded successfully")
 except Exception as e:
-    print(f"❌ Error loading model: {str(e)}")
-    try:
-        print("⌛ Attempting fallback load with compile=False...")
-        with custom_object_scope(get_custom_objects()):
-            model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        print("✅ Model loaded successfully with fallback method")
-    except Exception as e:
-        print(f"❌ Error loading model (fallback): {str(e)}")
-        raise
+    print(f"❌ Fatal error loading model: {str(e)}")
+    raise
 
 # ✅ Preprocess the frame
 def preprocess_frame(frame, img_height=250, img_width=250):
