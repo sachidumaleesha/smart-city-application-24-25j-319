@@ -10,9 +10,30 @@ import time
 
 youtube_bp = Blueprint("youtubeDetection", __name__)
 
-# ✅ Load model
+# ✅ Load model with custom objects
 MODEL_PATH = "app/mlModels/modelNew.h5"
-model = tf.keras.models.load_model(MODEL_PATH)
+
+def get_custom_objects():
+    class CustomInputLayer(tf.keras.layers.InputLayer):
+        def get_config(self):
+            config = super().get_config()
+            if 'batch_shape' in config:
+                input_shape = config.pop('batch_shape')
+                config['input_shape'] = input_shape[1:]
+            return config
+
+    return {'InputLayer': CustomInputLayer}
+
+try:
+    model = tf.keras.models.load_model(MODEL_PATH, custom_objects=get_custom_objects())
+except Exception as e:
+    print(f"Error loading model: {str(e)}")
+    # Fallback: try loading with compile=False
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False, custom_objects=get_custom_objects())
+    except Exception as e:
+        print(f"Error loading model (fallback): {str(e)}")
+        raise
 
 # ✅ Preprocess the frame
 def preprocess_frame(frame, img_height=250, img_width=250):
