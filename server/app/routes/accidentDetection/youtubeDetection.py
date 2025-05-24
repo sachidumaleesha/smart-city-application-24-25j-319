@@ -19,8 +19,9 @@ def get_custom_objects():
         def __init__(self, input_shape=None, batch_size=None, dtype=None, sparse=False, name=None, **kwargs):
             if 'batch_shape' in kwargs:
                 batch_shape = kwargs.pop('batch_shape')
-                input_shape = batch_shape[1:] if len(batch_shape) > 1 else batch_shape
-                batch_size = batch_shape[0]
+                if isinstance(batch_shape, (list, tuple)):
+                    input_shape = batch_shape[1:]
+                    batch_size = batch_shape[0]
             super().__init__(input_shape=input_shape, batch_size=batch_size,
                            dtype=dtype, sparse=sparse, name=name, **kwargs)
 
@@ -48,37 +49,54 @@ def get_custom_objects():
 
         @classmethod
         def from_config(cls, config):
-            return cls(config['name'])
+            if isinstance(config, dict) and 'name' in config:
+                return cls(config['name'])
+            return cls('float32')  # Default fallback
 
         def get_config(self):
             return {'name': self.name}
+
+    # Custom Conv2D layer to handle dtype policy
+    class CustomConv2D(tf.keras.layers.Conv2D):
+        def __init__(self, *args, **kwargs):
+            if 'dtype' in kwargs and isinstance(kwargs['dtype'], dict):
+                dtype_config = kwargs['dtype']
+                if isinstance(dtype_config, dict) and 'config' in dtype_config:
+                    kwargs['dtype'] = dtype_config['config'].get('name', 'float32')
+            super().__init__(*args, **kwargs)
 
     # Return all custom objects needed
     return {
         'InputLayer': CustomInputLayer,
         'CustomInputLayer': CustomInputLayer,
-        'DTypePolicy': DTypePolicy
+        'DTypePolicy': DTypePolicy,
+        'Conv2D': CustomConv2D
     }
 
 def load_model_with_retries(max_retries=3, delay=1):
     """Load model with multiple retries and proper error handling"""
+    last_exception = None
     for attempt in range(max_retries):
         try:
             print(f"⌛ Loading model from {MODEL_PATH} (Attempt {attempt + 1}/{max_retries})")
             with custom_object_scope(get_custom_objects()):
-                return tf.keras.models.load_model(MODEL_PATH, compile=False)
+                model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+                print(f"✅ Model loaded successfully with input shape: {model.input_shape}")
+                return model
         except Exception as e:
+            last_exception = e
             print(f"❌ Error loading model (Attempt {attempt + 1}): {str(e)}")
             if attempt < max_retries - 1:
                 print(f"⌛ Waiting {delay} seconds before retrying...")
                 time.sleep(delay)
-            else:
-                print("❌ All attempts to load model failed")
-                raise
+    
+    print("❌ All attempts to load model failed")
+    if last_exception:
+        raise last_exception
+    raise Exception("Failed to load model after all retries")
 
 try:
     model = load_model_with_retries()
-    print("✅ Model loaded successfully")
 except Exception as e:
     print(f"❌ Fatal error loading model: {str(e)}")
     raise
