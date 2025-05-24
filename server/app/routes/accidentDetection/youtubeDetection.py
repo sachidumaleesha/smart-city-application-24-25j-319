@@ -7,6 +7,7 @@ import subprocess
 import base64
 import uuid
 import time
+from keras.utils import custom_object_scope
 
 youtube_bp = Blueprint("youtubeDetection", __name__)
 
@@ -23,25 +24,38 @@ def get_custom_objects():
             super().__init__(input_shape=input_shape, batch_size=batch_size,
                            dtype=dtype, sparse=sparse, name=name, **kwargs)
 
-        def get_config(self):
-            config = super().get_config()
-            return config
+    class DTypePolicy:
+        def __init__(self, name):
+            self.name = name
 
-    # Register both names to handle both cases
+        def __eq__(self, other):
+            return self.name == getattr(other, 'name', None)
+
+        @classmethod
+        def from_config(cls, config):
+            return cls(config['name'])
+
+        def get_config(self):
+            return {'name': self.name}
+
+    # Return all custom objects needed
     return {
         'InputLayer': CustomInputLayer,
-        'CustomInputLayer': CustomInputLayer
+        'CustomInputLayer': CustomInputLayer,
+        'DTypePolicy': DTypePolicy
     }
 
 try:
     print("⌛ Loading model from:", MODEL_PATH)
-    model = tf.keras.models.load_model(MODEL_PATH, custom_objects=get_custom_objects())
+    with custom_object_scope(get_custom_objects()):
+        model = tf.keras.models.load_model(MODEL_PATH)
     print("✅ Model loaded successfully")
 except Exception as e:
     print(f"❌ Error loading model: {str(e)}")
     try:
         print("⌛ Attempting fallback load with compile=False...")
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False, custom_objects=get_custom_objects())
+        with custom_object_scope(get_custom_objects()):
+            model = tf.keras.models.load_model(MODEL_PATH, compile=False)
         print("✅ Model loaded successfully with fallback method")
     except Exception as e:
         print(f"❌ Error loading model (fallback): {str(e)}")
