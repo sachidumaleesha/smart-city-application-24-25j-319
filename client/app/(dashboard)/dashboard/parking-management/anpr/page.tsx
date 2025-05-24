@@ -53,7 +53,7 @@ export default function ANPRPage() {
       setDriver("");
       setEntryTime("");
 
-      const res = await fetch("http://127.0.0.1:5000/api/anpr/detect_plate", {
+      const res = await fetch("http://172.31.4.98:5000/api/anpr/detect_plate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: imageData }),

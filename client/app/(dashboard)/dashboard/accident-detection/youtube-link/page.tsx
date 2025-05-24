@@ -40,7 +40,7 @@ const YouTubeDetectionPage = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/youtubeDetection/analyze-youtube",
+        "http://172.31.4.98:5000/api/youtubeDetection/analyze-youtube",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

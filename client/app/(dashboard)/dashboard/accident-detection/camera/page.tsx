@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -57,7 +56,7 @@ const AccidentDetectionPage = () => {
     const fetchAlerts = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/accidentDetection/alerts"
+          "http://172.31.4.98:5000/api/accidentDetection/alerts"
         );
         const data = await response.json();
 
@@ -95,7 +94,7 @@ const AccidentDetectionPage = () => {
               {camera}
             </h2>
             <img
-              src={`http://localhost:5000/api/accidentDetection/stream/${camera}`}
+              src={`http://172.31.4.98:5000/api/accidentDetection/stream/${camera}`}
               className="w-full h-auto"
               alt={`${camera} Stream`}
             />
