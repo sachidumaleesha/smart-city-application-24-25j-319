@@ -13,12 +13,13 @@ module.exports = {
     {
       name: 'backend',
       cwd: '/home/ubuntu/smart-city-application-24-25j-319/server',
-      script: '/home/ubuntu/smart-city-application-24-25j-319/server/venv/bin/python3',
+      script: 'python3',
       args: 'server.py',
-      interpreter: 'none',
       env: {
         PYTHONPATH: '/home/ubuntu/smart-city-application-24-25j-319/server',
-        FLASK_ENV: 'production'
+        FLASK_ENV: 'production',
+        TF_ENABLE_ONEDNN_OPTS: '1',
+        TF_CPP_MIN_LOG_LEVEL: '2'
       }
     }
   ]
