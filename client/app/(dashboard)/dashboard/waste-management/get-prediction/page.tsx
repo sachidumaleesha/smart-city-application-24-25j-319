@@ -44,7 +44,7 @@ export default function WasteManagementPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const response = await fetch("https://web-production-08d02.up.railway.app/api/wasteManagement/predict", {
+      const response = await fetch("https://web-production-15dc.up.railway.app/api/wasteManagement/predict", {
         method: "POST",
         body: formData,
       })
