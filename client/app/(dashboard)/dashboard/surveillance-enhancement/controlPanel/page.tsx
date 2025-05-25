@@ -175,7 +175,7 @@ const SurveillanceEnhancementPage = () => {
       <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg overflow-hidden">
         {feedStarted ? (
           <img
-            src="http://13.201.219.73:5000/cctv/video_feed"
+            src={`${siteConfig.api.baseUrl}/cctv/video_feed`}
             alt="Live CCTV Feed"
             className="w-full"
           />

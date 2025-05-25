@@ -84,7 +84,7 @@ def snapshot():
     cv2.imwrite(filepath, frame)
     
     # Construct URL for the snapshot; adjust if needed for your host/port.
-    image_url = f"http://localhost:5000/snapshots/{filename}"
+    image_url = f"/snapshots/{filename}"  # Use relative URL
     
     # Save the snapshot record (timestamp in ISO format)
     snapshot_record = {
