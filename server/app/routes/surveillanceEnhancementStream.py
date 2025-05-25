@@ -3,7 +3,8 @@ import time
 import tensorflow as tf
 import cv2
 import numpy as np
-from flask import Blueprint, Response, jsonify, send_from_directory
+from flask import Blueprint, Response, jsonify, send_from_directory, current_app
+from flask_cors import cross_origin
 
 cctv_bp = Blueprint("cctv", __name__)
 
@@ -56,22 +57,26 @@ def gen_frames():
         frame_count += 1
 
 @cctv_bp.route("/cctv/video_feed")
+@cross_origin()
 def video_feed():
     return Response(gen_frames(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-@cctv_bp.route("/cctv/suspicious", methods=["GET"])
+@cctv_bp.route("/cctv/suspicious", methods=["GET", "OPTIONS"])
+@cross_origin()
 def get_suspicious_count():
     global suspicious_count
-    return jsonify({"suspicious_count": suspicious_count})
+    response = jsonify({"suspicious_count": suspicious_count})
+    return response
 
-@cctv_bp.route("/cctv/reset", methods=["POST"])
+@cctv_bp.route("/cctv/reset", methods=["POST", "OPTIONS"])
+@cross_origin()
 def reset_suspicious_count():
     global suspicious_count
     suspicious_count = 0
     return jsonify({"message": "Suspicious count reset"}), 200
 
-# Snapshot endpoint: capture a frame, save it, and record the snapshot report.
-@cctv_bp.route("/cctv/snapshot", methods=["GET"])
+@cctv_bp.route("/cctv/snapshot", methods=["GET", "OPTIONS"])
+@cross_origin()
 def snapshot():
     ret, frame = cap.read()
     if not ret:
@@ -83,8 +88,8 @@ def snapshot():
     filepath = os.path.join(snapshots_dir, filename)
     cv2.imwrite(filepath, frame)
     
-    # Construct URL for the snapshot; adjust if needed for your host/port.
-    image_url = f"/snapshots/{filename}"  # Use relative URL
+    # Construct URL for the snapshot using the server's URL
+    image_url = f"http://13.201.219.73:5000/snapshots/{filename}"
     
     # Save the snapshot record (timestamp in ISO format)
     snapshot_record = {
@@ -95,12 +100,13 @@ def snapshot():
     
     return jsonify({"image_url": image_url})
 
-# New endpoint: return all snapshot reports.
-@cctv_bp.route("/cctv/reports", methods=["GET"])
+@cctv_bp.route("/cctv/reports", methods=["GET", "OPTIONS"])
+@cross_origin()
 def get_reports():
     return jsonify({"reports": snapshotsReports})
 
-@cctv_bp.route("/cctv/start", methods=["POST"])
+@cctv_bp.route("/cctv/start", methods=["POST", "OPTIONS"])
+@cross_origin()
 def start_feed():
     global cap, suspicious_count
     cap = cv2.VideoCapture(0)
@@ -109,7 +115,8 @@ def start_feed():
     suspicious_count = 0
     return jsonify({"message": "Camera feed started"}), 200
 
-@cctv_bp.route("/cctv/stop", methods=["POST"])
+@cctv_bp.route("/cctv/stop", methods=["POST", "OPTIONS"])
+@cross_origin()
 def stop_feed():
     global cap
     if cap and cap.isOpened():
@@ -117,7 +124,8 @@ def stop_feed():
         cv2.destroyAllWindows()
     return jsonify({"message": "Camera feed stopped"}), 200
 
-@cctv_bp.route("/snapshots/<path:filename>")
+@cctv_bp.route("/snapshots/<path:filename>", methods=["GET", "OPTIONS"])
+@cross_origin()
 def download_file(filename):
     snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
     return send_from_directory(snapshots_dir, filename)
