@@ -6,13 +6,16 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination:
-          process.env.NODE_ENV === 'development'
-            ? 'http://127.0.0.1:5000/api/:path*'
-            : 'http://172.31.4.98:5000/api/:path*',
+        destination: "/api/:path*",  // Let nginx handle the proxy
       },
+      {
+        source: "/cctv/:path*",
+        destination: "/cctv/:path*",  // Let nginx handle the proxy
+      }
     ];
   },
+  // Add output configuration
+  output: 'standalone',
 };
 
 export default nextConfig;
