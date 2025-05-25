@@ -3,7 +3,7 @@ import time
 import tensorflow as tf
 import cv2
 import numpy as np
-from flask import Blueprint, Response, jsonify, send_from_directory, current_app
+from flask import Blueprint, Response, jsonify, send_from_directory, current_app, request
 from flask_cors import cross_origin
 
 cctv_bp = Blueprint("cctv", __name__)
@@ -64,6 +64,9 @@ def video_feed():
 @cctv_bp.route("/cctv/suspicious", methods=["GET", "OPTIONS"])
 @cross_origin()
 def get_suspicious_count():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     global suspicious_count
     response = jsonify({"suspicious_count": suspicious_count})
     return response
@@ -71,6 +74,9 @@ def get_suspicious_count():
 @cctv_bp.route("/cctv/reset", methods=["POST", "OPTIONS"])
 @cross_origin()
 def reset_suspicious_count():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     global suspicious_count
     suspicious_count = 0
     return jsonify({"message": "Suspicious count reset"}), 200
@@ -78,6 +84,9 @@ def reset_suspicious_count():
 @cctv_bp.route("/cctv/snapshot", methods=["GET", "OPTIONS"])
 @cross_origin()
 def snapshot():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     ret, frame = cap.read()
     if not ret:
         return jsonify({"error": "Failed to capture snapshot"}), 500
@@ -103,11 +112,16 @@ def snapshot():
 @cctv_bp.route("/cctv/reports", methods=["GET", "OPTIONS"])
 @cross_origin()
 def get_reports():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
     return jsonify({"reports": snapshotsReports})
 
 @cctv_bp.route("/cctv/start", methods=["POST", "OPTIONS"])
 @cross_origin()
 def start_feed():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     global cap, suspicious_count
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -118,6 +132,9 @@ def start_feed():
 @cctv_bp.route("/cctv/stop", methods=["POST", "OPTIONS"])
 @cross_origin()
 def stop_feed():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     global cap
     if cap and cap.isOpened():
         cap.release()
@@ -127,5 +144,8 @@ def stop_feed():
 @cctv_bp.route("/snapshots/<path:filename>", methods=["GET", "OPTIONS"])
 @cross_origin()
 def download_file(filename):
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    
     snapshots_dir = os.path.join(os.path.dirname(__file__), "..", "snapshots")
     return send_from_directory(snapshots_dir, filename)

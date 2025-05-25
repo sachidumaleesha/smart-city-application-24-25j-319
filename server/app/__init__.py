@@ -3,10 +3,18 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)  # Enable CORS for Next.js requests
+    
+    # Configure CORS with proper settings
+    CORS(app, resources={
+        r"/*": {
+            "origins": ["http://13.201.219.73:3000", "http://localhost:3000"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "supports_credentials": True
+        }
+    })
 
     # Register accident detection blueprint
-
     from app.routes.accidentDetection.youtubeDetection import youtube_bp
     from app.routes.accidentDetection.accidentDetection import accident_bp
     # from app.routes.accidentDetection.accidenttesst import accident_bp
