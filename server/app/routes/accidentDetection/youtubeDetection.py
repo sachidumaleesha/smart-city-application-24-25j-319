@@ -12,7 +12,7 @@ from keras.utils import custom_object_scope
 youtube_bp = Blueprint("youtubeDetection", __name__)
 
 # ✅ Load model with custom objects
-MODEL_PATH = "app/mlModels/modelNew.h5"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "mlModels", "modelNew.h5")
 
 def get_custom_objects():
     class CustomInputLayer(tf.keras.layers.InputLayer):
@@ -94,26 +94,41 @@ def load_model_with_retries(max_retries=3, delay=1):
     """Load model with multiple retries and proper error handling"""
     last_exception = None
     
-    # Define expected input shape
-    expected_shape = (None, 250, 250, 3)
-    
     for attempt in range(max_retries):
         try:
             print(f"⌛ Loading model from {MODEL_PATH} (Attempt {attempt + 1}/{max_retries})")
             
-            # Create custom objects with proper input shape handling
-            custom_objects = get_custom_objects()
+            # First, verify the model file exists
+            if not os.path.exists(MODEL_PATH):
+                raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
             
-            with custom_object_scope(custom_objects):
-                # Try loading with explicit input shape
+            # Try loading with a custom input layer
+            input_layer = tf.keras.layers.Input(shape=(250, 250, 3))
+            custom_objects = {
+                'input_1': input_layer
+            }
+            
+            try:
                 model = tf.keras.models.load_model(
                     MODEL_PATH,
                     compile=False,
                     custom_objects=custom_objects
                 )
-                
                 print(f"✅ Model loaded successfully with input shape: {model.input_shape}")
                 return model
+            except Exception as e:
+                print(f"Failed to load with custom objects: {str(e)}")
+                # Try reconstructing the model
+                try:
+                    model = tf.keras.models.load_model(
+                        MODEL_PATH,
+                        compile=False,
+                        custom_objects=None
+                    )
+                    print(f"✅ Model loaded successfully with basic loading. Input shape: {model.input_shape}")
+                    return model
+                except Exception as e2:
+                    raise Exception(f"Both loading attempts failed. Error 1: {str(e)}, Error 2: {str(e2)}")
                 
         except Exception as e:
             last_exception = e
