@@ -9,6 +9,18 @@ import uuid
 import time
 from keras.utils import custom_object_scope
 
+# Configure TensorFlow to handle GPU memory and initialization issues
+physical_devices = tf.config.list_physical_devices('GPU')
+if physical_devices:
+    try:
+        # Limit TensorFlow to only use the first GPU and allocate memory as needed
+        tf.config.set_visible_devices(physical_devices[0], 'GPU')
+        tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    except RuntimeError as e:
+        print(f"GPU configuration error: {e}")
+else:
+    print("No GPU devices found. Using CPU.")
+
 youtube_bp = Blueprint("youtubeDetection", __name__)
 
 # ✅ Load model with custom objects
@@ -102,30 +114,39 @@ def load_model_with_retries(max_retries=3, delay=1):
             if not os.path.exists(MODEL_PATH):
                 raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
             
-            # Try loading with a custom input layer
-            input_layer = tf.keras.layers.Input(shape=(250, 250, 3))
-            custom_objects = {
-                'input_1': input_layer
-            }
-            
             try:
+                # Try loading with minimal configuration
                 model = tf.keras.models.load_model(
                     MODEL_PATH,
                     compile=False,
-                    custom_objects=custom_objects
+                    options=tf.saved_model.LoadOptions(
+                        experimental_io_device='/job:localhost'
+                    )
                 )
                 print(f"✅ Model loaded successfully with input shape: {model.input_shape}")
                 return model
             except Exception as e:
-                print(f"Failed to load with custom objects: {str(e)}")
-                # Try reconstructing the model
+                print(f"Standard loading failed: {str(e)}")
+                # Try with custom objects as fallback
                 try:
+                    custom_objects = {
+                        'Input': tf.keras.layers.Input,
+                        'Conv2D': tf.keras.layers.Conv2D,
+                        'MaxPooling2D': tf.keras.layers.MaxPooling2D,
+                        'Dropout': tf.keras.layers.Dropout,
+                        'Flatten': tf.keras.layers.Flatten,
+                        'Dense': tf.keras.layers.Dense
+                    }
+                    
                     model = tf.keras.models.load_model(
                         MODEL_PATH,
                         compile=False,
-                        custom_objects=None
+                        custom_objects=custom_objects,
+                        options=tf.saved_model.LoadOptions(
+                            experimental_io_device='/job:localhost'
+                        )
                     )
-                    print(f"✅ Model loaded successfully with basic loading. Input shape: {model.input_shape}")
+                    print(f"✅ Model loaded successfully with custom objects. Input shape: {model.input_shape}")
                     return model
                 except Exception as e2:
                     raise Exception(f"Both loading attempts failed. Error 1: {str(e)}, Error 2: {str(e2)}")
@@ -142,8 +163,11 @@ def load_model_with_retries(max_retries=3, delay=1):
         raise last_exception
     raise Exception("Failed to load model after all retries")
 
+# Initialize model loading in a try-except block
 try:
+    print("🚀 Initializing TensorFlow and loading model...")
     model = load_model_with_retries()
+    print("✅ Model loaded successfully!")
 except Exception as e:
     print(f"❌ Fatal error loading model: {str(e)}")
     raise
