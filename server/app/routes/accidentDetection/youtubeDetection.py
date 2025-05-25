@@ -7,6 +7,7 @@ import subprocess
 import base64
 import uuid
 import time
+import h5py
 from keras.utils import custom_object_scope
 
 # Configure TensorFlow to handle GPU memory and initialization issues
@@ -26,81 +27,22 @@ youtube_bp = Blueprint("youtubeDetection", __name__)
 # ✅ Load model with custom objects
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "mlModels", "modelNew.h5")
 
-def get_custom_objects():
-    class CustomInputLayer(tf.keras.layers.InputLayer):
-        def __init__(self, input_shape=None, batch_size=None, dtype=None, sparse=False, name=None, **kwargs):
-            if 'batch_shape' in kwargs:
-                batch_shape = kwargs.pop('batch_shape')
-                if isinstance(batch_shape, (list, tuple)):
-                    input_shape = batch_shape[1:]
-                    batch_size = batch_shape[0]
-            
-            # Convert input_shape to TensorShape if it's not already
-            if input_shape is not None and not isinstance(input_shape, tf.TensorShape):
-                input_shape = tf.TensorShape(input_shape)
-            
-            super().__init__(input_shape=input_shape, batch_size=batch_size,
-                           dtype=dtype, sparse=sparse, name=name, **kwargs)
-
-        def get_config(self):
-            config = super().get_config()
-            if 'batch_shape' in config:
-                config['batch_shape'] = tf.TensorShape(config['batch_shape']).as_list()
-            return config
-
-    class DTypePolicy:
-        def __init__(self, name):
-            self._name = name
-            self._dtype = tf.dtypes.as_dtype(name)
-
-        @property
-        def name(self):
-            return self._name
-
-        @property
-        def compute_dtype(self):
-            return self._dtype
-
-        @property
-        def variable_dtype(self):
-            return self._dtype
-
-        def __eq__(self, other):
-            if hasattr(other, 'name'):
-                return self.name == other.name
-            return False
-
-        @classmethod
-        def from_config(cls, config):
-            if isinstance(config, dict) and 'name' in config:
-                return cls(config['name'])
-            return cls('float32')
-
-        def get_config(self):
-            return {'name': self.name}
-
-    # Custom Conv2D layer to handle dtype policy
-    class CustomConv2D(tf.keras.layers.Conv2D):
-        def __init__(self, *args, **kwargs):
-            if 'dtype' in kwargs and isinstance(kwargs['dtype'], dict):
-                dtype_config = kwargs['dtype']
-                if isinstance(dtype_config, dict) and 'config' in dtype_config:
-                    kwargs['dtype'] = dtype_config['config'].get('name', 'float32')
-            super().__init__(*args, **kwargs)
-
-        def get_config(self):
-            config = super().get_config()
-            if isinstance(config.get('input_shape'), (list, tuple)):
-                config['input_shape'] = tf.TensorShape(config['input_shape']).as_list()
-            return config
-
-    # Return all custom objects needed
-    return {
-        'InputLayer': CustomInputLayer,
-        'CustomInputLayer': CustomInputLayer,
-        'DTypePolicy': DTypePolicy,
-        'Conv2D': CustomConv2D
-    }
+class CustomInputLayer(tf.keras.layers.InputLayer):
+    def __init__(self, input_shape=None, batch_size=None, dtype=None, sparse=False, name=None, **kwargs):
+        if 'batch_shape' in kwargs:
+            batch_shape = kwargs.pop('batch_shape')
+            if isinstance(batch_shape, (list, tuple)) and len(batch_shape) > 1:
+                input_shape = batch_shape[1:]
+                batch_size = batch_shape[0]
+        
+        super().__init__(
+            input_shape=input_shape,
+            batch_size=batch_size,
+            dtype=dtype,
+            sparse=sparse,
+            name=name,
+            **kwargs
+        )
 
 def load_model_with_retries(max_retries=3, delay=1):
     """Load model with multiple retries and proper error handling"""
@@ -115,38 +57,39 @@ def load_model_with_retries(max_retries=3, delay=1):
                 raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
             
             try:
-                # Try loading with minimal configuration
+                # Try loading with custom input layer
+                custom_objects = {
+                    'InputLayer': CustomInputLayer,
+                    'input_layer_1': CustomInputLayer,
+                }
+                
                 model = tf.keras.models.load_model(
                     MODEL_PATH,
                     compile=False,
-                    options=tf.saved_model.LoadOptions(
-                        experimental_io_device='/job:localhost'
-                    )
+                    custom_objects=custom_objects
                 )
                 print(f"✅ Model loaded successfully with input shape: {model.input_shape}")
                 return model
             except Exception as e:
-                print(f"Standard loading failed: {str(e)}")
-                # Try with custom objects as fallback
+                print(f"Custom loading failed: {str(e)}")
+                # Try reconstructing the model
                 try:
-                    custom_objects = {
-                        'Input': tf.keras.layers.Input,
-                        'Conv2D': tf.keras.layers.Conv2D,
-                        'MaxPooling2D': tf.keras.layers.MaxPooling2D,
-                        'Dropout': tf.keras.layers.Dropout,
-                        'Flatten': tf.keras.layers.Flatten,
-                        'Dense': tf.keras.layers.Dense
-                    }
-                    
-                    model = tf.keras.models.load_model(
-                        MODEL_PATH,
-                        compile=False,
-                        custom_objects=custom_objects,
-                        options=tf.saved_model.LoadOptions(
-                            experimental_io_device='/job:localhost'
-                        )
+                    # Create a new model with the correct input shape
+                    inputs = tf.keras.layers.Input(shape=(250, 250, 3))
+                    base_model = tf.keras.applications.MobileNetV2(
+                        input_tensor=inputs,
+                        include_top=False,
+                        weights=None
                     )
-                    print(f"✅ Model loaded successfully with custom objects. Input shape: {model.input_shape}")
+                    x = tf.keras.layers.GlobalAveragePooling2D()(base_model.output)
+                    x = tf.keras.layers.Dense(1024, activation='relu')(x)
+                    outputs = tf.keras.layers.Dense(1, activation='sigmoid')(x)
+                    
+                    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+                    
+                    # Load weights from the saved model
+                    model.load_weights(MODEL_PATH)
+                    print(f"✅ Model reconstructed and weights loaded. Input shape: {model.input_shape}")
                     return model
                 except Exception as e2:
                     raise Exception(f"Both loading attempts failed. Error 1: {str(e)}, Error 2: {str(e2)}")
