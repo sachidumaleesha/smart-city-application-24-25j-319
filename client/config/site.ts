@@ -23,4 +23,7 @@ export const siteConfig = {
     name: "Oktay Colakoglu",
     web: "https://oktaycolakoglu.com",
   },
+  api: {
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://13.201.219.73:5000"
+  }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { siteConfig } from "@/config/site"
 
 const SurveillanceEnhancementPage = () => {
   const [feedStarted, setFeedStarted] = useState(false)
@@ -15,7 +16,7 @@ const SurveillanceEnhancementPage = () => {
 
   const handleStartFeed = async () => {
     try {
-      const res = await fetch("http://13.201.219.73:5000/cctv/start", { method: "POST" })
+      const res = await fetch(`${siteConfig.api.baseUrl}/cctv/start`, { method: "POST" })
       const data = await res.json()
       console.log("Start feed:", data)
       setFeedStarted(true)
@@ -26,7 +27,7 @@ const SurveillanceEnhancementPage = () => {
 
   const handleStopFeed = async () => {
     try {
-      const res = await fetch("http://13.201.219.73:5000/cctv/stop", { method: "POST" })
+      const res = await fetch(`${siteConfig.api.baseUrl}/cctv/stop`, { method: "POST" })
       const data = await res.json()
       console.log("Stop feed:", data)
       setFeedStarted(false)
@@ -39,7 +40,7 @@ const SurveillanceEnhancementPage = () => {
   const sendWhatsappMessage = async () => {
     try {
       // Get snapshot data from snapshot API
-      const snapshotRes = await fetch("http://13.201.219.73:5000/cctv/snapshot", { method: "GET" })
+      const snapshotRes = await fetch(`${siteConfig.api.baseUrl}/cctv/snapshot`, { method: "GET" })
       const snapshotData = await snapshotRes.json()
       console.log("Snapshot:", snapshotData)
       
@@ -123,14 +124,14 @@ const SurveillanceEnhancementPage = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://13.201.219.73:5000/cctv/suspicious")
+        const res = await fetch(`${siteConfig.api.baseUrl}/cctv/suspicious`)
         const { suspicious_count } = await res.json()
         setSuspiciousCount(suspicious_count)
         if (suspicious_count > 40) {
           setAlertMessage("Warning: High number of suspicious activity detected!")
           await sendWhatsappMessage()
           // Optionally reset the suspicious count on the server
-          await fetch("http://13.201.219.73:5000/cctv/reset", { method: "POST" })
+          await fetch(`${siteConfig.api.baseUrl}/cctv/reset`, { method: "POST" })
           setSuspiciousCount(0)
         } else {
           setAlertMessage("")
